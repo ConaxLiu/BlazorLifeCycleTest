@@ -1,0 +1,84 @@
+﻿@using BlazorLifeCycleTest.Data
+@inject TextGenerator TextGenerator
+
+<div class="d-block mr-2">
+    <h3>Child @ChildModel.Id</h3>
+
+    <EditForm Model="this">
+        <InputSelect DisplayName="MiddleName" 
+                     Value="ChildModel.MiddleName"
+                     ValueChanged="@(async (string s) => await MiddleNameChanged(s))"
+                     ValueExpression="@(() => ChildModel.MiddleName)">
+            @foreach (var name in MiddleNames)
+            {
+                <option value="@name">@name</option>
+            }
+        </InputSelect>
+    </EditForm>
+    <table border="1" cellspacing="1" cellpadding="1" width="200px" class="@ChildClass">
+        <tr>
+            <td>First Name</td>
+            <td>@ChildModel.FirstName</td>
+        </tr>
+        <tr>
+            <td>Middle Name</td>
+            <td>@ChildModel.MiddleName</td>
+        </tr>
+        <tr>
+            <td>Full Name</td>
+            <td>@ChildModel.LastName</td>
+        </tr>
+        <tr>
+            <td>Full Name</td>
+            <td>@FullName </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><button type="button" @onclick="DeleteMe">Delete Me</button></td>
+        </tr>
+    </table>
+</div>
+@code {
+    [Parameter] public ChildModel ChildModel { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnMiddleNameChange { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+
+    public string[] MiddleNames { get; set; } = new string[] { "Ken", "Sam", "Pam", "Den", "Jen", "Ben", "Xen" };
+    public string FullName { get; set; } = "";
+    public string ChildClass { get; set; } = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        ChildModel.MiddleName = MiddleNames[0];
+        ChildClass = "text-primary";
+        FullName = "Updating Full Name in On Initialized Async...";
+        await OnMiddleNameChange.InvokeAsync((ChildModel.Id, ChildModel.MiddleName));
+        FullName = await TextGenerator.BuildFullName(ChildModel.FirstName, ChildModel.MiddleName, ChildModel.LastName);
+        ChildClass = "";
+    }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        Console.WriteLine($"  EXECUT Child {ChildModel.Id} OnParametersSetAsync STARTED");
+        ChildClass = "text-danger";
+        FullName = "Updating Full Name in On Parameters Set Async...";
+        FullName = await TextGenerator.BuildFullName(ChildModel.FirstName, ChildModel.MiddleName, ChildModel.LastName);
+        ChildClass = "";
+        Console.WriteLine($"  EXECUT Child {ChildModel.Id} OnParametersSetAsync ENDED");
+    }
+
+    protected async Task MiddleNameChanged(string s)
+    {
+        //ChildModel.MiddleName = s;
+        ChildClass = "text-success";
+        FullName = "Updating Full Name in Middle Name Changed...";
+        FullName = await TextGenerator.BuildFullName(ChildModel.FirstName, s, ChildModel.LastName);
+        await OnMiddleNameChange.InvokeAsync((ChildModel.Id, ChildModel.MiddleName));
+        ChildClass = "";
+    }
+
+    protected async Task DeleteMe()
+    {
+        await OnDelete.InvokeAsync(ChildModel.Id);
+    }
+}

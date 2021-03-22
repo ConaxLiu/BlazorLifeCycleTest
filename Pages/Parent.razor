@@ -1,0 +1,77 @@
+﻿@page "/"
+@using BlazorLifeCycleTest.Data
+
+<h3>Parent</h3>
+
+<div class="d-flex">
+    <EditForm Model="this">
+        <InputSelect id="FirstName" @bind-Value="@FirstName">
+            @foreach (var name in FirstNames)
+            {
+                <option value="@name">@name</option>
+            }
+        </InputSelect>
+        <InputSelect id="LastName" @bind-Value="@LastName">
+            @foreach (var name in LastNames)
+            {
+                <option value="@name">@name</option>
+            }
+        </InputSelect>
+    </EditForm>
+</div>
+<hr />
+<div class="d-flex flex-wrap">
+    @foreach (ChildModel child in Children)
+    {
+        <Child ChildModel="@child"
+               OnMiddleNameChange="@((args) => OnChildMiddleNameChanged(args.Item1, args.Item2))"
+               OnDelete="OnChildDelete" />
+    }
+</div>
+
+@code {
+    public string[] FirstNames { get; set; } = new string[] { "Matthew", "Mark", "Luke", "John", "Paul", "Timothy", "Titus" };
+    public string FirstName { get; set; } = "";
+
+    public string[] LastNames { get; set; } = new string[] { "Smith", "Bucanan", "Tumes", "Ardern", "Jackson" };
+    public string LastName { get; set; } = "";
+    List<ChildModel> Children = new List<ChildModel>();
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            Console.WriteLine($"EXECUT Parent OnInitialized STARTED");
+
+            FirstName = FirstNames[0];
+            LastName = LastNames[0];
+
+            for (int i = 1; i <= 10; i++)
+            {
+                Children.Add(new ChildModel
+                {
+                    Id = i,
+                    FirstName = this.FirstName,
+                    MiddleName = "",
+                    LastName = this.LastName,
+                });
+            }
+            Console.WriteLine($"EXECUT Parent OnInitialized ENDED");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    protected void OnChildMiddleNameChanged(int childId, string middleName)
+    {
+        Children.FirstOrDefault(c => c.Id == childId).MiddleName = middleName;
+    }
+
+    protected void OnChildDelete(int childId)
+    {
+        Children.RemoveAll(c => c.Id == childId);
+    }
+
+}
